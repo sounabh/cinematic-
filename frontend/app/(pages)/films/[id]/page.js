@@ -20,27 +20,25 @@ import { useToast } from "@/hooks/use-toast";
 export default function MovieDetails() {
   const [movie, setMovie] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState([]);  // Initialize as empty array
   const [isLiked, setIsLiked] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   
   const token = useUserStore((state) => state.token);
   const params = useParams();
+  const { toast } = useToast();
 
-  const {toast} = useToast()
-
-  // Single useEffect for all initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         // Fetch movie details first
         const movieData = await fetchSearchMovieDeatils(params.id);
         setMovie(movieData);
 
-        const MovieReviewss = await fetchMovieReviews(params.id)
-       // console.log(MovieReviews);
-        
-        setReviews(MovieReviewss)
+        const movieReviews = await fetchMovieReviews(params.id);
+        // Ensure reviews is always an array
+        setReviews(Array.isArray(movieReviews) ? movieReviews : []);
 
         // If we have a token, fetch auth-required data
         if (token) {
@@ -51,33 +49,42 @@ export default function MovieDetails() {
               withCredentials: true,
             }
           );
-          console.log(response);
           
           setIsLiked(response.data.isLiked);
           setIsWatched(response.data.isWatched);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast({
+          variant: "destructive",
+          description: "Error loading movie details. Please try again.",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [params.id, token]);
+  }, [params.id, token, toast]);
 
   const handleReviewSubmit = async (rating, reviewText) => {
     if (!token) {
-      alert("Please login to submit a review.");
+      toast({
+        variant: "destructive",
+        description: "Please login to submit a review.",
+      });
+      return;
+    }
+
+    if (!rating || !reviewText?.trim()) {
+      toast({
+        variant: "destructive",
+        description: "Please provide both a rating and review.",
+      });
       return;
     }
 
     try {
-      if (!rating || !reviewText?.trim()) {
-        alert("Please provide both a rating and review.");
-        return;
-      }
-
       const response = await postReview(
         params.id,
         {
@@ -87,11 +94,6 @@ export default function MovieDetails() {
         },
         token
       );
-
-      toast({
-        description: "Your Reveiw has been submitted.",
-      })
-
 
       const newReview = response?.result || response;
       const formattedReview = {
@@ -103,19 +105,30 @@ export default function MovieDetails() {
         user: newReview.user || { id: "current-user" },
       };
 
-      setReviews((prevReviews) => [...prevReviews, formattedReview]);
-      
+      // Safely update reviews array
+      setReviews((prevReviews) => {
+        const currentReviews = Array.isArray(prevReviews) ? prevReviews : [];
+        return [...currentReviews, formattedReview];
+      });
 
-
+      toast({
+        description: "Your review has been submitted.",
+      });
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert(error.message || "Error submitting review. Please try again.");
+      toast({
+        variant: "destructive",
+        description: error.message || "Error submitting review. Please try again.",
+      });
     }
   };
 
   const handleLike = async () => {
     if (!token) {
-      alert("Please login to like movies.");
+      toast({
+        variant: "destructive",
+        description: "Please login to like movies.",
+      });
       return;
     }
 
@@ -130,23 +143,23 @@ export default function MovieDetails() {
         tmdbId: params.id,
       };
 
-     // const updatedLikeStatus = !isLiked;
-      //setIsLiked(updatedLikeStatus); // Optimistic update
-
       const response = await toggleLike(params.id, movieData, token);
-     
-        setIsLiked(response);
-      
+      setIsLiked(response);
     } catch (error) {
-      setIsLiked(!isLiked); // Revert on error
       console.error("Error updating like status:", error);
-      alert(error.message || "Error updating like status. Please try again.");
+      toast({
+        variant: "destructive",
+        description: error.message || "Error updating like status. Please try again.",
+      });
     }
   };
 
   const handleWatched = async () => {
     if (!token) {
-      alert("Please login to mark movies as watched.");
+      toast({
+        variant: "destructive",
+        description: "Please login to mark movies as watched.",
+      });
       return;
     }
 
@@ -161,18 +174,19 @@ export default function MovieDetails() {
         tmdbId: params.id,
       };
 
-      
       const response = await toggleWatched(params.id, movieData, token);
-  
-        setIsWatched(response);
-      
+      setIsWatched(response);
     } catch (error) {
-      setIsWatched(!isWatched); // Revert on error
       console.error("Error updating watched status:", error);
-      alert(error.message || "Error updating watched status. Please try again.");
+      toast({
+        variant: "destructive",
+        description: error.message || "Error updating watched status. Please try again.",
+      });
     }
   };
 
+  // Rest of the component remains the same...
+  // (Keeping the JSX part unchanged since the error was in the state management logic)
   // Rest of your component JSX remains the same...
 
   if (isLoading || !movie) {
