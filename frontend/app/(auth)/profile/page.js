@@ -341,96 +341,97 @@ export default function MainUserProfilePage() {
 
         {/* Content Cards */}
         <div className="md:col-span-2">
-    <Card className="backdrop-blur-xl bg-black/40 border-purple-500/20 text-purple-400">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Film className="w-5 h-5 text-purple-400" />
-          Recent Watches
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {userInfo?.watchedMovies?.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
-            {userInfo.watchedMovies.slice(-10).reverse().map((movie, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <Card className="group bg-purple-900/20 border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      {/* Movie Poster */}
-                      <div className="relative w-32 h-48 flex-shrink-0 overflow-hidden rounded-md">
-                        <img
-                          src={movie.posterUrl || '/placeholder-movie.jpg'}
-                          alt={movie.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      </div>
+  <Card className="backdrop-blur-xl bg-black/40 border-purple-500/20 text-purple-400">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+        <Film className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+        Recent Watches
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      {userInfo?.watchedMovies?.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {userInfo.watchedMovies.slice(-10).reverse().map((movie, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+            >
+              <Card className="group bg-purple-900/20 border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
+                <CardContent className="p-2 sm:p-4">
+                  <div className="flex gap-2 sm:gap-4">
+                    {/* Movie Poster */}
+                    <div className="relative w-20 h-28 sm:w-24 md:w-32 sm:h-36 md:h-48 flex-shrink-0 overflow-hidden rounded-md">
+                      <img
+                        src={movie.posterUrl || '/placeholder-movie.jpg'}
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
 
-                      {/* Movie Details */}
-                      <div className="flex flex-col flex-1">
-                        <h4 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-                          {movie.title}
-                        </h4>
+                    {/* Movie Details */}
+                    <div className="flex flex-col flex-1 min-w-0"> {/* Added min-w-0 to prevent overflow */}
+                      <h4 className="text-base sm:text-lg font-semibold text-white mb-1 sm:mb-2 line-clamp-2">
+                        {movie.title}
+                      </h4>
+                      
+                      <div className="flex flex-col gap-1.5 sm:gap-2 mt-auto">
+                        {movie.releaseDate && (
+                          <div className="flex items-center text-xs sm:text-sm text-purple-300">
+                            <Calendar className="w-3 h-3 mr-1.5 sm:mr-2 flex-shrink-0" />
+                            {new Date(movie.releaseDate).getFullYear()}
+                          </div>
+                        )}
                         
-                        <div className="flex flex-col gap-2 mt-auto">
-                          {movie.releaseDate && (
-                            <div className="flex items-center text-sm text-purple-300">
-                              <Calendar className="w-3 h-3 mr-2" />
-                              {new Date(movie.releaseDate).getFullYear()}
-                            </div>
-                          )}
-                          
-                          {movie.rating && (
-                            <div className="flex items-center text-sm text-purple-300">
-                              <Star className="w-3 h-3 mr-2" />
-                              {movie.rating}/10
-                            </div>
-                          )}
-                          
-                          <Badge
-                            variant="secondary"
-                            className={`w-fit hover:bg-purple-900 ${
-                              userInfo?.likedMovies?.includes(movie.tmdbId)
-                                ? "bg-purple-500/20 text-purple-300"
-                                : "bg-purple-900/50 text-purple-300"
+                        {movie.rating && (
+                          <div className="flex items-center text-xs sm:text-sm text-purple-300">
+                            <Star className="w-3 h-3 mr-1.5 sm:mr-2 flex-shrink-0" />
+                            {movie.rating}/10
+                          </div>
+                        )}
+                        
+                        <Badge
+                          variant="secondary"
+                          className={`w-fit text-xs sm:text-sm px-2 py-0.5 hover:bg-purple-900 ${
+                            userInfo?.likedMovies?.includes(movie.tmdbId)
+                              ? "bg-purple-500/20 text-purple-300"
+                              : "bg-purple-900/50 text-purple-300"
+                          }`}
+                        >
+                          <Heart
+                            className={`w-3 h-3 mr-1 flex-shrink-0 ${
+                              userInfo?.likedMovies?.includes(movie.tmdbId) ? "fill-pink-700" : ""
                             }`}
-                          >
-                            <Heart
-                              className={`w-3 h-3 mr-1 ${
-                                userInfo?.likedMovies?.includes(movie.tmdbId) ? "fill-pink-700 " : ""
-                              }`}
-                            />
-                            {userInfo?.likedMovies?.includes(movie.tmdbId) ? "Liked" : "Like"}
-                          </Badge>
+                          />
+                          {userInfo?.likedMovies?.includes(movie.tmdbId) ? "Liked" : "Like"}
+                        </Badge>
 
-                          {movie.watchedDate && (
-                            <div className="flex items-center text-xs text-purple-300/70 mt-2">
-                              <Eye className="w-3 h-3 mr-2" />
+                        {movie.watchedDate && (
+                          <div className="flex items-center text-xs text-purple-300/70 mt-1 sm:mt-2">
+                            <Eye className="w-3 h-3 mr-1.5 sm:mr-2 flex-shrink-0" />
+                            <span className="truncate">
                               Watched {new Date(movie.watchedDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Eye className="w-12 h-12 text-purple-400 mx-auto mb-4 opacity-50" />
-            <p className="text-purple-300 text-lg">No movies watched yet</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  </div>
-
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 sm:py-12">
+          <Eye className="w-8 h-8 sm:w-12 sm:h-12 text-purple-400 mx-auto mb-3 sm:mb-4 opacity-50" />
+          <p className="text-purple-300 text-base sm:text-lg">No movies watched yet</p>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+</div>
           
         </div>
       </div>
