@@ -186,14 +186,18 @@ const getReceiverProfile = async (req, res) => {
    // console.log(req.user._id);
 
     // 7. Check if the chat already exists
-    const existingChat = await Chat.findOne({ senderId: senderId });
+    const existingChat = await Chat.findOne({ 
+      senderId: senderId,
+      receiverId: receiver._id
+    });
 
   //  console.log(existingChat?.senderId.toString() === req.user._id.toString());
 
     // 8. If chat exists, return it, else create a new one
     if (
-      existingChat &&
-      existingChat.senderId.toString() === req.user._id.toString()
+      existingChat && 
+      existingChat.senderId.toString() === req.user._id.toString() &&
+      existingChat.receiverId.toString() === receiver._id.toString()
     ) {
       return res.status(200).json({ sender, receiver, chat: existingChat });
 
@@ -283,32 +287,39 @@ const ToggleFollowUser = async (req, res) => {
   }
 };
 
-
 const getChats = async (req, res) => {
   try {
-    const senderId = req.user._id;
-    // console.log("Sender ID from request:", senderId);
-
-    // Ensure senderId is in the correct format (ObjectId)
-
-    // Fetch chats and populate receiver's username and userImage
-    const chats = await Chat.find({ senderId: senderId }).populate(
-      "receiverId",
-      "username userImage"
-    ); // Populate receiver's details
-
-    //console.log("Chats fetched with populated receiver data:", chats);
+    const userId = req.user._id;
+    
+    // Find chats where user is either sender or receiver
+    const chats = await Chat.find({
+      $or: [
+        { senderId: userId },
+        { receiverId: userId }
+      ]
+    }).populate("senderId receiverId", "username userImage");
 
     if (!chats || chats.length === 0) {
-      return res.status(200).json({ message: "No chats found", chats: [] });
-    } else {
-      return res.status(200).json({ chats });
+      return res.status(200).json({ 
+        message: "No chats found", 
+        chats: [] 
+      });
     }
+
+    // Sort chats by most recent first (assuming you have a timestamp field)
+    // If you don't have a timestamp field, you can remove this sort
+    chats.sort((a, b) => b.createdAt - a.createdAt);
+
+    return res.status(200).json({ chats });
+
   } catch (error) {
     console.error("Error fetching chats:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
+
+
 export { searchUser, getUser, getReceiverProfile, ToggleFollowUser, getChats };
