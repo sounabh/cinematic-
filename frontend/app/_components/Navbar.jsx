@@ -101,7 +101,7 @@ export default function Navbar() {
                     <MessageCircle className='w-4 h-4 text-purple-200 fill-purple-400'></MessageCircle>
                   </span>
                     </div>
-                    <span className="text-white font-medium">Profile</span>
+                    <span className="text-white font-medium">Messages</span>
                   </Link>
 
 
