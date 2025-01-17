@@ -61,7 +61,7 @@ const port = process.env.PORT || 8000;
 // Initialize Socket.IO with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: "12angrymen.vercel.app", // Allow requests from this origin (frontend URL)
+    origin: "http://localhost:3000", // Allow requests from this origin (frontend URL)
     methods: ["GET", "POST"],        // Allow only GET and POST HTTP methods
     credentials: true,               // Enable credentials (e.g., cookies or headers)
   },
@@ -143,7 +143,7 @@ io.on('connection', async (socket) => {
   }
 
   socket.on("chat-message", async (data) => {
-   // console.log("Server received message:", data.newMessage);
+    console.log("Server received message:", data.newMessage);
     
     // Store message in Redis
     try {

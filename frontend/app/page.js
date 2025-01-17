@@ -24,7 +24,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired - clear user state
-      useUserStore.getState().clearUser();
+     // useUserStore.getState().clearUser();
     }
     return Promise.reject(error);
   }
@@ -45,7 +45,7 @@ export default function MovieLanding() {
       } catch (error) {
         // Token validation failed - clear user
         console.error("Token validation failed:", error.message);
-        clearUser();
+       // clearUser();
       }
     };
 
