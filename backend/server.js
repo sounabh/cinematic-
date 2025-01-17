@@ -61,7 +61,7 @@ const port = process.env.PORT || 8000;
 // Initialize Socket.IO with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: "12angrymen.vercel.app", // Allow requests from this origin (frontend URL)
+    origin: "https://12angrymen.vercel.app/", // Allow requests from this origin (frontend URL)
     methods: ["GET", "POST"],        // Allow only GET and POST HTTP methods
     credentials: true,               // Enable credentials (e.g., cookies or headers)
   },
