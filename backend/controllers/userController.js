@@ -241,7 +241,7 @@ const getProfile = async (req, res) => {
     // console.log("cached user from profile route", cachedUser.watchedMovies[0]?.tmdbId);
 
     
-    if (cacheUser) {
+    if (cachedUser.watchedMovies[0]?.tmdbId) {
       return res.status(200).json({ userInfo: cachedUser });
     }
 
