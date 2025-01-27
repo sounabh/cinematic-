@@ -102,7 +102,7 @@ const ChatList = () => {
                             {otherUserInfo.username}
                           </h2>
                           <p className="text-purple-300 text-sm mt-1">
-                            {chat.senderId._id === user._id ? 'You messaged them' : 'They messaged you'}
+                           Connect with your fellow cinephiles
                           </p>
                         </div>
                       </div>

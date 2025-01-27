@@ -46,7 +46,7 @@ export default function MainUserProfilePage() {
           },
           withCredentials: true,
         })
-        console.log(response);
+       // console.log(response);
 
         
         //const data = response.data.userInfo
@@ -111,6 +111,8 @@ export default function MainUserProfilePage() {
         withCredentials: true,
       })
 
+      //console.log(response.data.user);
+      
 
       if (response.data.user) {
         const fetchedUser = response.data.user;

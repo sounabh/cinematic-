@@ -24,7 +24,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired - clear user state
-     // useUserStore.getState().clearUser();
+      useUserStore.getState().clearUser();
     }
     return Promise.reject(error);
   }
@@ -34,23 +34,29 @@ export default function MovieLanding() {
   const { token, clearUser } = useUserStore();
 
   useEffect(() => {
-    // Only check token if it exists
-    if (!token) return;
+    let isInitialMount = true;
 
-    const validateToken = async () => {
-      try {
-        await api.post("/checktoken", {}, {
-          headers: { authorization: `Bearer ${token}` }
-        });
-      } catch (error) {
-        // Token validation failed - clear user
-        console.error("Token validation failed:", error.message);
-       // clearUser();
-      }
+    // Only run token validation on initial mount if token exists
+    if (isInitialMount && token) {
+      const validateToken = async () => {
+        try {
+          await api.post("/checktoken", {}, {
+            headers: { authorization: `Bearer ${token}` }
+          });
+        } catch (error) {
+          console.error("Token validation failed:", error.message);
+          clearUser();
+        }
+      };
+
+      validateToken();
+    }
+
+    // Cleanup function to prevent validation on subsequent renders
+    return () => {
+      isInitialMount = false;
     };
-
-    validateToken();
-  }, [token, clearUser]);
+  }, []); // Empty dependency array ensures effect runs only once on mount
 
   return (
     <div className="min-h-screen bg-black text-white">

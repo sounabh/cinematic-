@@ -36,10 +36,11 @@ const createRating = async (req, res) => {
     // If an existing rating is found, delete it
     if (existingRating) {
       // Remove the rating reference from user's ratings array
-      await User.findByIdAndUpdate(user._id, {
+     const update1 =  await User.findByIdAndUpdate(user._id, {
         $pull: { reviews: existingRating._id },
-      });
+      },{ new: true, runValidators: true });
 
+       await cacheUser(req.user.id,update1)
       // Delete the existing rating
       await Ratings.findByIdAndDelete(existingRating._id);
     }
@@ -53,9 +54,11 @@ const createRating = async (req, res) => {
     });
 
     // Add the new rating reference to user's ratings array
-    await User.findByIdAndUpdate(user._id, {
+   const update1 =  await User.findByIdAndUpdate(user._id, {
       $push: { reviews: newRating._id },
-    });
+    },{ new: true, runValidators: true });
+
+    await cacheUser(req.user.id,update1)
 
     const populatedRating = await Ratings.findById(newRating._id)
       .populate("user", "username userImage") // Specify the fields to include
@@ -459,7 +462,7 @@ const getWatchedLikedMovies = async (req, res) => {
     const cachedUser = await getCachedUser(user.id);
     //console.log(cachedUser);
 
-    if (cachedUser.watchedMovies[0].tmdbId) {
+    if (cachedUser.watchedMovies[0]?.tmdbId) {
       //console.log("cache");
 
       return res.status(200).json({
@@ -497,6 +500,9 @@ const getWatchedLikedMovies = async (req, res) => {
     return res.status(500).json({ error: "An internal server error occurred" });
   }
 };
+
+
+
 
 export {
   fetchRatings,

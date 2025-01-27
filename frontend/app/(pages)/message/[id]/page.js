@@ -6,6 +6,7 @@ import { socketInitialize, sendMessage, receivedMessage } from "@/lib/socket.js"
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import useUserStore from '@/lib/userStore';
+import Link from 'next/link';
 
 const CinemaChat = () => {
   const params = useParams();
@@ -18,7 +19,7 @@ const CinemaChat = () => {
   const [isSending, setIsSending] = useState(false);
   const [receiver, setReceiver] = useState([]);
   const [userImage, setUserImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const emojis = ['😊', '🎬', '🍿', '⭐', '👍', '❤️', '🎥', '🎭', '🎪', '🎟️'];
 
@@ -28,30 +29,41 @@ const CinemaChat = () => {
 
   useEffect(() => {
     const socket = socketInitialize(params.id, token);
-    setIsLoading(true);
+   
+
+setIsLoading(true)
 
     // Handle previous messages from Redis
-    receivedMessage("previous-messages", (data) => {
+    const handlePreviousMessages = (data) => {
       console.log("Received previous messages:", data);
-      setMessages(data.map(msg => ({
+      const formattedMessages = data.map((msg) => ({
         text: msg.message,
         time: new Date(msg.timestamp).toLocaleTimeString(),
-        senderId: msg.senderId, // Store sender ID from Redis
-        isCurrentUser: msg.senderId === userId // Compare with current user's ID
-      })));
-      setIsLoading(false);
-    });
-
-    // Handle new incoming messages
-    receivedMessage("message", (data) => {
+        senderId: msg.senderId,
+        isCurrentUser: msg.senderId === userId,
+      }));
+      setMessages(formattedMessages);
+      setIsLoading(false); // Only stop loading after messages are processed
+    };
+  
+    const handleNewMessage = (data) => {
       console.log("Received new message:", data);
-      setMessages(prev => [...prev, {
-        text: data,
-        time: new Date().toLocaleTimeString(),
-        senderId: data.senderId,
-        isCurrentUser: data.senderId === userId
-      }]);
-    });
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: data.message,
+          time: new Date(data.timestamp).toLocaleTimeString(),
+          senderId: data.senderId,
+          isCurrentUser: data.senderId === userId,
+        },
+      ]);
+    };
+  
+    // Listen for previous messages and new messages
+    receivedMessage("previous-messages", handlePreviousMessages);
+    receivedMessage("message", handleNewMessage);
+
+
 
     const getReceiverProfile = async () => {
       try {
@@ -63,7 +75,7 @@ const CinemaChat = () => {
           }
         );
         
-      //  console.log(response);
+       // console.log(response);
         
         setReceiver(response.data.receiver);
         setUserImage(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${response.data.sender.userImage}`);
@@ -116,11 +128,13 @@ const CinemaChat = () => {
         {/* Header */}
         <div className="bg-gray-800 p-4 flex items-center justify-between border-b border-purple-800">
           <div className="flex items-center space-x-3">
+            <Link href={`/profile/${receiver._id}`}>
             <img 
               src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${receiver.userImage}`} 
               alt="Current chat" 
               className="w-10 h-10 rounded-full" 
             />
+            </Link>
             <div>
               <h2 className="text-white font-semibold">{receiver.username}</h2>
               <p className="text-purple-300 text-sm">Online</p>

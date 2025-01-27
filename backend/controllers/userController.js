@@ -5,8 +5,9 @@ import {
   genToken,
   comparePassword,
 } from "../services/authServices.js";
-import { cacheUser, getCachedUser } from "../services/redisCacheServices.js";
+import { cacheUser, getCachedUser, invalidateUserCache } from "../services/redisCacheServices.js";
 import Movie from "../models/moviesSchema.js";
+
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -88,7 +89,7 @@ const loginUser = async (req, res) => {
 
       const cachedUser = await getCachedUser(user.id);
 
-      // console.log("chachedUser from login",cachedUser);
+    //  console.log("chachedUser from login",cachedUser);
 
       if (cachedUser) {
         const token = genToken(user.id);
@@ -105,6 +106,7 @@ const loginUser = async (req, res) => {
         });
       } else {
         const token = genToken(user.id);
+        invalidateUserCache(user.id)
         await cacheUser(user.id, user);
         return res.status(200).json({
           success: true,
@@ -177,27 +179,29 @@ const updateProfile = async (req, res) => {
     }
 
     // Update the user's details in the database
-    const updatedUser1 = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
     // If the user is not found, send an error response
-    if (!updatedUser1) {
+    if (!updatedUser) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    //await invalidateUserCache(req.user.id);
+//console.log(updatedUser);
 
-    const updatedUser = await cacheUser(req.user.id, updatedUser1);
+
+    //await invalidateUserCache(req.user.id);
+     await cacheUser(req.user.id, updatedUser);
 
     // Respond with the updated user profile
     return res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
+      message: "Profile updated successfully",   
       user: updatedUser,
     });
   } catch (error) {
@@ -236,12 +240,7 @@ const getProfile = async (req, res) => {
 
     // console.log("cached user from profile route", cachedUser.watchedMovies[0]?.tmdbId);
 
-    if (cachedUser.watchedMovies > 0 && cachedUser.watchedMovies[0].tmdbId) {
-      //console.log("cache");
-
-      return res.status(200).json({ userInfo: cachedUser });
-    }
-
+    
     if (cacheUser) {
       return res.status(200).json({ userInfo: cachedUser });
     }

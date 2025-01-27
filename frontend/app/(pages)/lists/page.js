@@ -119,7 +119,7 @@ const MovieCollection = () => {
         </section>
 
         {/* Liked Movies Section */}
-        <section className="space-y-6">
+       {/* <section className="space-y-6">
           <h2 className="text-3xl font-bold text-pink-300 border-b border-pink-800/30 pb-3 flex items-center gap-3">
             <span className="bg-gradient-to-r from-pink-400 to-pink-600 bg-clip-text text-transparent">
               Favorites
@@ -157,7 +157,7 @@ const MovieCollection = () => {
               </Card>
             ))}
           </div>
-        </section>
+        </section>*/}
       </div>
     </div>
   )

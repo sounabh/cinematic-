@@ -146,7 +146,7 @@ const ResponsiveProfile = ({ userInfo, chatId, handleFollow, toggleFollow }) => 
                           </motion.div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>User's {label.toLowerCase()}</p>
+                          <p>`User&apos;s`{label.toLowerCase()}</p>
                         </TooltipContent>
                       </Tooltip>
                     ))}

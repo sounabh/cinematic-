@@ -9,6 +9,7 @@ import useUserStore from '@/lib/userStore'
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/app/_components/ui/sheet"
 
@@ -77,6 +78,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         <Sheet>
+          <SheetTitle>Menu</SheetTitle>
           <SheetTrigger asChild className="md:hidden">
             <Button variant="ghost" size="icon" className="text-white">
               <Menu className="h-5 w-5" />
@@ -101,7 +103,7 @@ export default function Navbar() {
                     <MessageCircle className='w-4 h-4 text-purple-200 fill-purple-400'></MessageCircle>
                   </span>
                     </div>
-                    <span className="text-white font-medium">Profile</span>
+                    <span className="text-white font-medium">Messages</span>
                   </Link>
 
 
