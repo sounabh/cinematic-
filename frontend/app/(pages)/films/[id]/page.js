@@ -123,67 +123,99 @@ export default function MovieDetails() {
     }
   };
 
-  const handleLike = async () => {
-    if (!token) {
-      toast({
-        variant: "destructive",
-        description: "Please login to like movies.",
-      });
-      return;
-    }
+ 
 
-    try {
-      const movieData = {
-        title: movie.title,
-        description: movie.overview,
-        releaseDate: movie.release_date,
-        genre: movie.genres.map((g) => g.name),
-        duration: movie.runtime,
-        posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-        tmdbId: params.id,
-      };
+const handleLike = async () => {
+  if (!token) {
+    toast({
+      variant: "destructive",
+      description: "Please login to like movies.",
+    });
+    return;
+  }
 
-      const response = await toggleLike(params.id, movieData, token);
+  try {
+    // Optimistic update
+    setIsLiked(prevState => !prevState);
+    
+    const movieData = {
+      title: movie.title,
+      description: movie.overview,
+      releaseDate: movie.release_date,
+      genre: movie.genres.map((g) => g.name),
+      duration: movie.runtime,
+      posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+      tmdbId: params.id,
+    };
+
+    // API call
+    const response = await toggleLike(params.id, movieData, token);
+    
+    // If API call fails, revert the optimistic update
+    if (response !== !isLiked) {
       setIsLiked(response);
-    } catch (error) {
-      console.error("Error updating like status:", error);
       toast({
         variant: "destructive",
-        description: error.message || "Error updating like status. Please try again.",
+        description: "Failed to update like status. Please try again.",
       });
     }
-  };
+  } catch (error) {
+    // Revert optimistic update on error
+    setIsLiked(prevState => !prevState);
+    console.error("Error updating like status:", error);
+    toast({
+      variant: "destructive",
+      description: error.message || "Error updating like status. Please try again.",
+    });
+  }
+};
 
-  const handleWatched = async () => {
-    if (!token) {
-      toast({
-        variant: "destructive",
-        description: "Please login to mark movies as watched.",
-      });
-      return;
-    }
+const handleWatched = async () => {
+  if (!token) {
+    toast({
+      variant: "destructive",
+      description: "Please login to mark movies as watched.",
+    });
+    return;
+  }
 
-    try {
-      const movieData = {
-        title: movie.title,
-        description: movie.overview,
-        releaseDate: movie.release_date,
-        genre: movie.genres.map((g) => g.name),
-        duration: movie.runtime,
-        posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-        tmdbId: params.id,
-      };
+  try {
+    // Optimistic update
+    setIsWatched(prevState => !prevState);
+    
+    const movieData = {
+      title: movie.title,
+      description: movie.overview,
+      releaseDate: movie.release_date,
+      genre: movie.genres.map((g) => g.name),
+      duration: movie.runtime,
+      posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+      tmdbId: params.id,
+    };
 
-      const response = await toggleWatched(params.id, movieData, token);
+    // API call
+    const response = await toggleWatched(params.id, movieData, token);
+    
+    // If API call fails, revert the optimistic update
+    if (response !== !isWatched) {
       setIsWatched(response);
-    } catch (error) {
-      console.error("Error updating watched status:", error);
       toast({
         variant: "destructive",
-        description: error.message || "Error updating watched status. Please try again.",
+        description: "Failed to update watched status. Please try again.",
       });
     }
-  };
+  } catch (error) {
+    // Revert optimistic update on error
+    setIsWatched(prevState => !prevState);
+    console.error("Error updating watched status:", error);
+    toast({
+      variant: "destructive",
+      description: error.message || "Error updating watched status. Please try again.",
+    });
+  }
+};
+
+   
 
   // Rest of the component remains the same...
   // (Keeping the JSX part unchanged since the error was in the state management logic)
