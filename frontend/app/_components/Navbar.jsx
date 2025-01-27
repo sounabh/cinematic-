@@ -78,7 +78,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         <Sheet>
-          <SheetTitle>Menu</SheetTitle>
+         
           <SheetTrigger asChild className="md:hidden">
             <Button variant="ghost" size="icon" className="text-white">
               <Menu className="h-5 w-5" />
