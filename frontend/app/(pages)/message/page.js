@@ -1,137 +1,230 @@
 "use client";
-import useUserStore from '@/lib/userStore';
-import axios from 'axios';
-import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
 
-const ChatList = () => {
+import React, { useEffect, useState } from 'react';
+import { Send, Smile, Image, Film, Phone, Video, MoreHorizontal } from 'lucide-react';
+import { socketInitialize, sendMessage, receivedMessage } from "@/lib/socket.js";
+import { useParams } from 'next/navigation';
+import axios from 'axios';
+import useUserStore from '@/lib/userStore';
+import Link from 'next/link';
+
+const CinemaChat = () => {
+  const params = useParams();
   const { token, user } = useUserStore();
-  const [chatData, setChatData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const userId = user?._id;
+
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [receiver, setReceiver] = useState([]);
+  const [userImage, setUserImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const emojis = ['😊', '🎬', '🍿', '⭐', '👍', '❤️', '🎥', '🎭', '🎪', '🎟️'];
+
+  const addEmoji = (emoji) => {
+    setNewMessage(newMessage + emoji);
+  };
+
+  console.log(process.env.NEXT_PUBLIC_BACKEND_SERVER_URL);
+  
 
   useEffect(() => {
-    async function getChats() {
+    const socket = socketInitialize(params.id, token);
+   
+
+setIsLoading(true)
+
+    // Handle previous messages from Redis
+    const handlePreviousMessages = (data) => {
+      console.log("Received previous messages:", data);
+      const formattedMessages = data.map((msg) => ({
+        text: msg.message,
+        time: new Date(msg.timestamp).toLocaleTimeString(),
+        senderId: msg.senderId,
+        isCurrentUser: msg.senderId === userId,
+      }));
+      setMessages(formattedMessages);
+      setIsLoading(false); // Only stop loading after messages are processed
+    };
+  
+    const handleNewMessage = (data) => {
+      console.log("Received new message:", data);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: data.message,
+          time: new Date(data.timestamp).toLocaleTimeString(),
+          senderId: data.senderId,
+          isCurrentUser: data.senderId === userId,
+        },
+      ]);
+    };
+  
+    // Listen for previous messages and new messages
+    receivedMessage("previous-messages", handlePreviousMessages);
+    receivedMessage("message", handleNewMessage);
+
+
+
+   const getReceiverProfile = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}/members/chats`, {
-          headers: { authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}}/message/${params.id}`, 
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          }
+        );
         
-        // Process chats to remove duplicates
-        const uniqueChats = processChats(response.data.chats);
-        setChatData(uniqueChats);
+       // console.log(response);
+        
+        setReceiver(response.data.receiver);
+        setUserImage(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${response.data.sender.userImage}`);
       } catch (error) {
-        console.error("Error fetching chats:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching receiver profile:", error);
       }
-    }
-    getChats();
-  }, [token]);
+    };
 
-  // Function to process chats and remove duplicates
-  const processChats = (chats) => {
-    const chatMap = new Map();
+    getReceiverProfile();
 
-    chats.forEach(chat => {
-      const participants = [chat.senderId._id, chat.receiverId._id].sort().join('_');
-      
-      // If this combination doesn't exist or if this chat is more recent
-      if (!chatMap.has(participants) || 
-          new Date(chat.updatedAt) > new Date(chatMap.get(participants).updatedAt)) {
-        chatMap.set(participants, chat);
+    return () => {
+      if (socket) {
+        socket.off("previous-messages");
+        socket.off("message");
       }
+    };
+  }, [params.id, token, userId]);
+
+  const handleSend = () => {
+    if (!newMessage.trim()) return;
+    setIsSending(true);
+
+    // Add message to local state with current user info
+    const messageObj = {
+      text: newMessage,
+      time: new Date().toLocaleTimeString(),
+      senderId: userId,
+      isCurrentUser: true
+    };
+
+    setMessages(prev => [...prev, messageObj]);
+
+    // Send message to server with sender ID
+    sendMessage("chat-message", { 
+      newMessage,
+      senderId: userId 
     });
 
-    return Array.from(chatMap.values());
+    setNewMessage('');
+    setIsSending(false);
   };
-
-  // Function to get other user's info
-  const getOtherUserInfo = (chat) => {
-    return chat.senderId._id === user._id ? chat.receiverId : chat.senderId;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-pink-500"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-      {/* Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-md bg-black/30 border-b border-pink-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-2">
-            <MessageCircle className="w-6 h-6 text-pink-500" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-red-500 bg-clip-text text-transparent">
-              Cinephile Conversations
-            </h1>
+    <div className="flex h-screen bg-gray-900">
+      {/* Sidebar */}
+ 
+
+      {/* Main Chat Area */}
+      <div className="flex-1  flex flex-col">
+        {/* Header */}
+        <div className="bg-gray-800 p-4 flex items-center justify-between border-b border-purple-800">
+          <div className="flex items-center space-x-3">
+            <Link href={`/profile/${receiver._id}`}>
+            <img 
+              src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${receiver.userImage}`} 
+              alt="Current chat" 
+              className="w-10 h-10 rounded-full" 
+            />
+            </Link>
+            <div>
+              <h2 className="text-white font-semibold">{receiver.username}</h2>
+              <p className="text-purple-300 text-sm">Online</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button className="text-purple-300 hover:text-white"><Phone size={20} /></button>
+            <button className="text-purple-300 hover:text-white"><Video size={20} /></button>
+            <button className="text-purple-300 hover:text-white"><Film size={20} /></button>
+            <button className="text-purple-300 hover:text-white"><MoreHorizontal size={20} /></button>
           </div>
         </div>
-      </div>
 
-      {/* Chat Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {chatData.length > 0 ? (
-            chatData.map((chat, ind) => {
-              const otherUserInfo = getOtherUserInfo(chat);
-              
-              return (
-                <Link
-                  href={`/message/${chat.chatId}`}
-                  key={ind}
-                  className="transform transition-all duration-300 hover:scale-105"
-                >
-                  <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden border border-purple-500/20 hover:border-pink-500/40 shadow-lg hover:shadow-purple-500/20">
-                    <div className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="relative">
-                          <img
-                            src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${otherUserInfo.userImage}`}
-                            alt={`${otherUserInfo.username}'s avatar`}
-                            className="w-16 h-16 rounded-full object-cover ring-2 ring-pink-500/50"
-                          />
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-800"></div>
-                        </div>
-                        <div className="flex-1">
-                          <h2 className="text-xl font-semibold text-white">
-                            {otherUserInfo.username}
-                          </h2>
-                          <p className="text-purple-300 text-sm mt-1">
-                           Connect with your fellow cinephiles
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="px-6 py-4 bg-black/20 border-t border-purple-500/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-pink-400">Chat now</span>
-                        <span className="text-xs text-purple-400">
-                          {new Date(chat.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
+        {/* Messages Area */}
+        <div className=" flex-1 overflow-y-scroll  custom-scrollbar p-4 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
           ) : (
-            <div className="col-span-full flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
-                <MessageCircle className="w-8 h-8 text-purple-500" />
+            messages.map((message, index) => (
+              <div key={index} className={`flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
+                <div className={`flex items-end max-w-[70%] ${message.isCurrentUser ? 'flex-row-reverse' : 'flex-row'} gap-2`}>
+                  <img 
+                    src={message.isCurrentUser ? userImage : `${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${receiver.userImage}`}
+                    alt="Avatar" 
+                    className="w-8 h-8 rounded-full self-end"
+                  />
+                  <div className={`flex flex-col ${message.isCurrentUser ? 'items-end' : 'items-start'}`}>
+                    <div className={`p-3 rounded-2xl ${message.isCurrentUser ? 'bg-purple-700 text-white rounded-br-none' : 'bg-gray-800 text-white rounded-bl-none'}`}>
+                      <p className="text-sm">{message.text}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 mt-1">{message.time}</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No Conversations Yet</h3>
-              <p className="text-purple-300">Start chatting with other cinephiles!</p>
+            ))
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-gray-800 p-4 border-t border-purple-800 relative">
+          {showEmojis && (
+            <div className="absolute bottom-20 bg-gray-800 p-2 rounded-lg border border-purple-800 shadow-lg">
+              <div className="grid grid-cols-5 gap-2">
+                {emojis.map((emoji, index) => (
+                  <button
+                    key={index}
+                    onClick={() => addEmoji(emoji)}
+                    className="hover:bg-gray-700 p-2 rounded"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowEmojis(!showEmojis)}
+              className="text-purple-300 hover:text-white p-2"
+            >
+              <Smile size={20} />
+            </button>
+            <button className="text-purple-300 hover:text-white p-2">
+              <Image size={20} />
+            </button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 bg-gray-900 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            />
+            <button
+              onClick={handleSend}
+              className="bg-purple-700 hover:bg-purple-600 text-white rounded-full p-2 transition-colors"
+              disabled={isSending}
+            >
+              <Send size={20} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default ChatList;
+export default CinemaChat;
