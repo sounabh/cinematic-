@@ -183,7 +183,13 @@ const updateProfile = async (req, res) => {
       req.user.id,
       { $set: updateFields },
       { new: true, runValidators: true }
-    );
+    ).populate({
+      path: "watchedMovies",
+      model: Movie,
+      localField: "watchedMovies",
+      foreignField: "tmdbId",
+      select: "tmdbId posterUrl title releaseDate"
+    });
 
     // If the user is not found, send an error response
     if (!updatedUser) {
