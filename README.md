@@ -34,6 +34,7 @@ Developed with Next.js and integrating advanced AI features, Cinematic is a soci
   - JWT (JSON Web Tokens)
   - Bcrypt.js
   - Socket.IO
+  - Redis
 
 # ![Alt text](frontend/public/logo.png)
 
