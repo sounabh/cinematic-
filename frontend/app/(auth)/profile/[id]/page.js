@@ -32,8 +32,8 @@ const MovieCard = ({ movie, userInfo }) => (
           {/* Movie Poster */}
           <div className="relative w-full sm:w-32 h-48 flex-shrink-0 overflow-hidden rounded-md">
             <img
-              src={movie.posterUrl || '/placeholder-movie.jpg'}
-              alt={movie.title}
+              src={movie?.posterUrl || '/placeholder-movie.jpg'}
+              alt={movie?.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
@@ -52,17 +52,17 @@ const MovieCard = ({ movie, userInfo }) => (
                 </div>
               )}
               
-              {movie.rating && (
+              {movie?.rating && (
                 <div className="flex items-center text-xs sm:text-sm text-purple-300">
                   <Star className="w-3 h-3 mr-2" />
-                  {movie.rating}/10
+                  {movie?.rating}/10
                 </div>
               )}
               
               <Badge
                 variant="secondary"
                 className={`w-fit text-xs hover:bg-purple-900 ${
-                  userInfo?.likedMovies?.includes(movie.tmdbId)
+                  userInfo?.likedMovies?.includes(movie?.tmdbId)
                     ? "bg-purple-500/20 text-purple-300"
                     : "bg-purple-900/50 text-purple-300"
                 }`}
@@ -253,7 +253,7 @@ export default function OtherUserProfilePage() {
         console.log(response);
         
         setUserInfo(response.data.data)
-        if (response.data.data.followers.includes(user._id)) {
+        if (response.data.data.followers.includes(user?._id)) {
           setToggleFollow(true)
         }
       } catch (error) {
@@ -266,7 +266,7 @@ export default function OtherUserProfilePage() {
     getProfile()
   }, [params.id, token, user._id])
 
-  const chatArr = [user._id, userInfo?._id].sort()
+  const chatArr = [user?._id, userInfo?._id].sort()
   const chatId = `${chatArr[0]}_${chatArr[1]}`
 
   const handleFollow = async () => {
