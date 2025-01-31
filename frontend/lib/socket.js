@@ -1,18 +1,11 @@
 "use client";
 
-import socket from "socket.io-client"; // Import 'io' from 'socket.io-client'
-import useUserStore from "./userStore";
+import socket from "socket.io-client";
 
+let socketInstance = null;
 
-
-
-let socketInstance = null; // Store the socket instance globally
-
-export const socketInitialize = (chatId,token) => {
-  
+export const socketInitialize = (chatId, token) => {
   if (socketInstance) return socketInstance;
-
-  
 
   if (!token) {
     console.error("No auth token found");
@@ -32,40 +25,39 @@ export const socketInitialize = (chatId,token) => {
     console.log("Socket connected:", socketInstance.id);
   });
 
+  socketInstance.on("connect_error", (error) => {
+    console.error("Socket connection error:", error);
+  });
+
   return socketInstance;
 };
-
 
 export const getSocketInstance = () => {
   if (!socketInstance) {
-      //console.error("Socket not initialized. Call socketInitialize first.");
+    console.error("Socket not initialized. Call socketInitialize first.");
   }
   return socketInstance;
-}
+};
 
-export const receivedMessage = (e, cb) => {
-
+export const receivedMessage = (event, callback) => {
   if (!socketInstance) {
-    console.log("Socket not initialized in receivedMessage");
+    console.error("Socket not initialized in receivedMessage");
     return;
   }
-  //console.log("Setting up message listener");
 
-  socketInstance.on(e, (receivedData) => {
-
-    //console.log("Message received:", receivedData);
-
-    cb(receivedData);
+  socketInstance.on(event, (data) => {
+    console.log(`Received ${event}:`, data);
+    callback(data);
   });
 };
 
+export const sendMessage = (event, message) => {
+  const socket = getSocketInstance();
+  if (!socket) {
+    console.error("Socket instance not found");
+    return;
+  }
 
-export const sendMessage = (e, data) => {
-  const socket = getSocketInstance()
-  //console.log(socket);
-  
-  //console.log("Sending message:", data);
- // console.log(e);
-  
-  socket.emit(e, data);
+  console.log(`Sending ${event}:`, message);
+  socket.emit(event, message);
 };
