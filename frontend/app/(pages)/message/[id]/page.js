@@ -28,18 +28,35 @@ const CinemaChat = () => {
 
   const emojis = ['😊', '🎬', '🍿', '⭐', '👍', '❤️', '🎥', '🎭', '🎪', '🎟️'];
 
-  // Scroll functionality
+  // Enhanced scroll functionality
+  const scrollToBottom = (force = false) => {
+    if (!messagesEndRef.current) return;
+
+    const container = chatContainerRef.current;
+    const isNearBottom = container && 
+      (container.scrollHeight - container.scrollTop - container.clientHeight < 100);
+
+    if (force || isNearBottom || hasNewMessage) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: force ? "auto" : "smooth",
+        block: "end"
+      });
+      setHasNewMessage(false);
+    }
+  };
+
+  // Scroll on new messages and initial load
   useEffect(() => {
-    if (messages.length > 0 && !isLoading) {
-      scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom(true);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      scrollToBottom(true);
     }
   }, [isLoading]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
 
   // Socket and data initialization
   useEffect(() => {
@@ -47,7 +64,6 @@ const CinemaChat = () => {
     
     const initializeChat = async () => {
       try {
-        // Get receiver profile first
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}/message/${params.id}`,
           {
@@ -59,7 +75,6 @@ const CinemaChat = () => {
         setReceiver(response.data.receiver);
         setUserImage(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${response.data.sender.userImage}`);
 
-        // Initialize socket after getting profile
         if (!socketInitialized.current) {
           socket = socketInitialize(params.id, token);
           socketInitialized.current = true;
@@ -75,7 +90,6 @@ const CinemaChat = () => {
             setIsLoading(false);
           });
 
-          // Set up message handlers
           receivedMessage("previous-messages", handlePreviousMessages);
           receivedMessage("message", handleNewMessage);
         }
@@ -150,7 +164,6 @@ const CinemaChat = () => {
     setHasNewMessage(true);
   };
 
-  // Early return for error state
   if (socketError) {
     return (
       <div className="flex h-screen bg-gray-900 items-center justify-center">
@@ -167,7 +180,6 @@ const CinemaChat = () => {
     );
   }
 
-  // Early return if receiver is not loaded
   if (!receiver) {
     return (
       <div className="flex h-screen bg-gray-900 items-center justify-center">
@@ -175,36 +187,41 @@ const CinemaChat = () => {
       </div>
     );
   }
+
   return (
     <div className="flex h-screen bg-gray-900">
-      <div className="flex-1 flex flex-col max-w-full md:max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-gray-800 p-3 md:p-4 flex items-center justify-between border-b border-purple-800">
-          <div className="flex items-center space-x-2 md:space-x-3">
-            <Link href={`/profile/${receiver._id}`}>
-              <img 
-                src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${receiver.userImage}`} 
-                alt="Current chat" 
-                className="w-8 h-8 md:w-10 md:h-10 rounded-full" 
-              />
-            </Link>
-            <div>
-              <h2 className="text-white font-semibold text-sm md:text-base">{receiver.username}</h2>
-              <p className="text-purple-300 text-xs md:text-sm">Online</p>
+      <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto relative">
+        {/* Fixed Header */}
+        <div className="fixed top-0 left-0 right-0 z-10 bg-gray-800 border-b border-purple-800">
+          <div className="max-w-7xl mx-auto">
+            <div className="p-3 md:p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <Link href={`/profile/${receiver._id}`}>
+                  <img 
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}${receiver.userImage}`} 
+                    alt="Current chat" 
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full" 
+                  />
+                </Link>
+                <div>
+                  <h2 className="text-white font-semibold text-sm md:text-base">{receiver.username}</h2>
+                  <p className="text-purple-300 text-xs md:text-sm">Online</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 md:space-x-4">
+                <button className="text-purple-300 hover:text-white p-1 md:p-2"><Phone size={18} className="md:w-5 md:h-5" /></button>
+                <button className="text-purple-300 hover:text-white p-1 md:p-2"><Video size={18} className="md:w-5 md:h-5" /></button>
+                <button className="text-purple-300 hover:text-white p-1 md:p-2"><Film size={18} className="md:w-5 md:h-5" /></button>
+                <button className="text-purple-300 hover:text-white p-1 md:p-2"><MoreHorizontal size={18} className="md:w-5 md:h-5" /></button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <button className="text-purple-300 hover:text-white p-1 md:p-2"><Phone size={18} className="md:w-5 md:h-5" /></button>
-            <button className="text-purple-300 hover:text-white p-1 md:p-2"><Video size={18} className="md:w-5 md:h-5" /></button>
-            <button className="text-purple-300 hover:text-white p-1 md:p-2"><Film size={18} className="md:w-5 md:h-5" /></button>
-            <button className="text-purple-300 hover:text-white p-1 md:p-2"><MoreHorizontal size={18} className="md:w-5 md:h-5" /></button>
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages Area with padding for fixed header */}
         <div 
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4 space-y-3 md:space-y-4"
+          className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4 space-y-3 md:space-y-4 mt-16 mb-16"
         >
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
@@ -232,48 +249,52 @@ const CinemaChat = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="bg-gray-800 p-3 md:p-4 border-t border-purple-800 relative">
-          {showEmojis && (
-            <div className="absolute bottom-16 md:bottom-20 left-0 bg-gray-800 p-2 rounded-lg border border-purple-800 shadow-lg">
-              <div className="grid grid-cols-5 gap-1 md:gap-2">
-                {emojis.map((emoji, index) => (
-                  <button
-                    key={index}
-                    onClick={() => addEmoji(emoji)}
-                    className="hover:bg-gray-700 p-1 md:p-2 rounded text-sm md:text-base"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+        {/* Fixed Input Area */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-purple-800">
+          <div className="max-w-7xl mx-auto relative">
+            <div className="p-3 md:p-4">
+              {showEmojis && (
+                <div className="absolute bottom-16 left-0 bg-gray-800 p-2 rounded-lg border border-purple-800 shadow-lg">
+                  <div className="grid grid-cols-5 gap-1 md:gap-2">
+                    {emojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        onClick={() => addEmoji(emoji)}
+                        className="hover:bg-gray-700 p-1 md:p-2 rounded text-sm md:text-base"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-1 md:gap-2">
+                <button
+                  onClick={() => setShowEmojis(!showEmojis)}
+                  className="text-purple-300 hover:text-white p-1 md:p-2"
+                >
+                  <Smile size={18} className="md:w-5 md:h-5" />
+                </button>
+                <button className="text-purple-300 hover:text-white p-1 md:p-2">
+                  <Image size={18} className="md:w-5 md:h-5" />
+                </button>
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1 bg-gray-900 text-white text-sm md:text-base rounded-full px-3 py-1 md:px-4 md:py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                />
+                <button
+                  onClick={handleSend}
+                  className="bg-purple-700 hover:bg-purple-600 text-white rounded-full p-1 md:p-2 transition-colors"
+                  disabled={isSending}
+                >
+                  <Send size={18} className="md:w-5 md:h-5" />
+                </button>
               </div>
             </div>
-          )}
-          <div className="flex items-center gap-1 md:gap-2">
-            <button
-              onClick={() => setShowEmojis(!showEmojis)}
-              className="text-purple-300 hover:text-white p-1 md:p-2"
-            >
-              <Smile size={18} className="md:w-5 md:h-5" />
-            </button>
-            <button className="text-purple-300 hover:text-white p-1 md:p-2">
-              <Image size={18} className="md:w-5 md:h-5" />
-            </button>
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-gray-900 text-white text-sm md:text-base rounded-full px-3 py-1 md:px-4 md:py-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            />
-            <button
-              onClick={handleSend}
-              className="bg-purple-700 hover:bg-purple-600 text-white rounded-full p-1 md:p-2 transition-colors"
-              disabled={isSending}
-            >
-              <Send size={18} className="md:w-5 md:h-5" />
-            </button>
           </div>
         </div>
       </div>
