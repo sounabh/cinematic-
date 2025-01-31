@@ -8,7 +8,7 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 
 ## Social AI-powered movie tracker & reviews 
-[🔴 Click Here](https://12amgrymen.vercel.app)
+[🔴 Click Here](https://12angrymen.vercel.app)
 
 
 
@@ -42,6 +42,8 @@ Cinematic is a comprehensive platform designed for film enthusiasts to enhance t
 ## 🔥 Features
 
 - **🏠 Responsive Home Page:** A visually appealing display of popular films, providing users with a captivating introduction to a diverse range of movies with Authentication system.
+
+ - **🛹 Data Managing and Caching :** Manage the bulk of movie,user data are managed by MongoDB and Caching for fast retrival via Redis.
 
 - **🔍 Movie Exploration and Filtering:** Explore a wide variety of films from around the world, utilizing a search system to search your fav movie ot movie to get track.
 
