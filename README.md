@@ -135,8 +135,8 @@ Once logged in, you can:
   - JWT tokens are used to verify user identity during interactions with the platform.
  
   - **Multer & Gemini:**
-  - Pfp images get updated they store in multer for image uploading and validation
-  - while easy Ai features intregated via Gemini and trained by Google ai studio
+  - Multer handles profile picture uploads and validation.
+  - Gemini AI, integrated via Google AI Studio, powers AI-driven features.
 
 By following this guide, you'll be well-equipped to navigate and utilize all the features Cinematic offers, while understanding the technical processes that ensure a seamless and secure user experience.
 
